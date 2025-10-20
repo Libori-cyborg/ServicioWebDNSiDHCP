@@ -8,7 +8,7 @@ import subprocess
 # sudo pip3 install flask flask-cors
 # Executar sudo python3 script.py
 
-
+#Prueba
 app = Flask(__name__)
 CORS(app)
 
