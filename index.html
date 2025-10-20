@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Control DHCP i DNS</title>
+  <style>
+    #resultat {
+      white-space: pre-wrap;
+      background: #f3f3f3;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+      font-family: monospace;
+      height: 300px;
+      overflow-y: scroll;
+    }
+    .btn {
+      margin: 3px;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Control dels serveis DHCP i DNS</h2>
+
+  <h3>DHCP (isc-dhcp-server)</h3>
+  <button class="btn" onclick="dhcpStatus()">Mostrar estat</button>
+  <button class="btn" onclick="dhcpStart()">Iniciar</button>
+  <button class="btn" onclick="dhcpStop()">Parar</button>
+  <button class="btn" onclick="dhcpRestart()">Reiniciar</button>
+  <button class="btn" onclick="dhcpInstall()">Instalar</button>
+
+  <h3>DNS (bind9)</h3>
+  <button class="btn" onclick="dnsStatus()">Mostrar estat</button>
+  <button class="btn" onclick="dnsStart()">Iniciar</button>
+  <button class="btn" onclick="dnsStop()">Parar</button>
+  <button class="btn" onclick="dnsRestart()">Reiniciar</button>
+  <button class="btn" onclick="dnsInstall()">Instalar</button>
+
+  <h3>Prompt</h3>
+  <button class="btn" onclick="clearOutput()">Netejar sortida</button>
+
+  <div id="resultat">Fes clic a un botó...</div>
+
+  <script>
+    function fetchService(url, method="GET") {
+      fetch(url, { method: method })
+        .then(res => res.json())
+        .then(data => document.getElementById('resultat').textContent = data.output)
+        .catch(err => document.getElementById('resultat').textContent = "Error: " + err);
+    }
+
+    // ---------- DHCP ----------
+    function dhcpStatus() { fetchService('http://localhost:5000/dhcp/status'); }
+    function dhcpStart() { fetchService('http://localhost:5000/dhcp/start', 'POST'); }
+    function dhcpStop() { fetchService('http://localhost:5000/dhcp/stop', 'POST'); }
+    function dhcpRestart() { fetchService('http://localhost:5000/dhcp/restart', 'POST'); }
+    function dhcpInstall() { fetchService('http://localhost:5000/dhcp/install', 'POST'); }
+
+    // ---------- DNS ----------
+    function dnsStatus() { fetchService('http://localhost:5000/dns/status'); }
+    function dnsStart() { fetchService('http://localhost:5000/dns/start', 'POST'); }
+    function dnsStop() { fetchService('http://localhost:5000/dns/stop', 'POST'); }
+    function dnsRestart() { fetchService('http://localhost:5000/dns/restart', 'POST'); }
+    function dnsInstall() { fetchService('http://localhost:5000/dns/install', 'POST'); }
+
+    // ---------- Netejar sortida ----------
+    function clearOutput() {
+      document.getElementById('resultat').textContent = "";
+    }
+  </script>
+</body>
+</html>
