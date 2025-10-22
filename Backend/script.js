@@ -101,6 +101,10 @@ function loadConfigFile() {
   const path = document.getElementById("configSelector").value;
   updateOutput(`📄 Obrint fitxer: ${path}`, false);
 
+  if (path === "/etc/default/isc-dhcp-server") {
+  updateOutput("💡 Consell: en aquest fitxer pots definir la interfície de xarxa per al DHCP.\nExemple:\nINTERFACESv4=\"enp0s3\"", false);
+  }
+
   fetch(`${API_URL}/config?path=${encodeURIComponent(path)}`)
     .then(res => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
