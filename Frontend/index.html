@@ -63,18 +63,38 @@
       <div class="output-section">
         <div class="output-header">
           <h3>💻 Sortida del Terminal</h3>
-          <button class="btn btn-clear" onclick="clearOutput()">🗑️ Netejar</button>
+          <div class="output-buttons">
+            <button class="btn btn-open" onclick="openLogs()">📂 Obrir sortides</button>
+            <button class="btn btn-edit" onclick="editConfigs()">📝 Editar configuracions</button>
+            <button class="btn btn-clear" onclick="clearOutput()">🗑️ Netejar</button>
+          </div>
         </div>
         <div id="resultat">Esperant comandes...</div>
       </div>
     </div>
 
     <div class="footer">
-      <p>Control de Serveis Linux - Interfície Web v2.3</p>
+      <p>Control de Serveis Linux - Interfície Web v3.0</p>
     </div>
   </div>
 
-  <script src="../Backend/script.js">
-  </script>
+  <!-- Modal d'edició -->
+  <div id="editorModal" class="modal">
+    <div class="modal-content">
+      <h3 id="editorTitle">📝 Editar fitxer</h3>
+      <select id="configSelector" class="config-selector" onchange="loadConfigFile()">
+        <option value="/etc/dhcp/dhcpd.conf">DHCP - /etc/dhcp/dhcpd.conf</option>
+        <option value="/etc/bind/named.conf.local">DNS - /etc/bind/named.conf.local</option>
+        <option value="/etc/bind/named.conf.options">DNS - /etc/bind/named.conf.options</option>
+      </select>
+      <textarea id="configEditor" spellcheck="false"></textarea>
+      <div class="editor-actions">
+        <button class="btn btn-save" onclick="saveConfig()">💾 Desa</button>
+        <button class="btn btn-close" onclick="closeEditor()">❌ Tancar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../Backend/script.js"></script>
 </body>
 </html>
