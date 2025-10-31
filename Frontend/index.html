@@ -41,8 +41,7 @@
           <button class="btn btn-stop" onclick="dhcpStop()">⏹️ Parar</button>
           <button class="btn btn-restart" onclick="dhcpRestart()">🔄 Reiniciar</button>
           <button class="btn btn-install" onclick="dhcpInstall()">📦 Instal·lar</button>
-          <button class="btn btn-auto" onclick="openDhcpWizard()">⚙️ Configurar DHCP Automàticament</button>
-
+          <button class="btn btn-config" onclick="openDhcpWizard()">⚙️ Configurar DHCP</button>
         </div>
       </div>
 
@@ -58,6 +57,7 @@
           <button class="btn btn-stop" onclick="dnsStop()">⏹️ Parar</button>
           <button class="btn btn-restart" onclick="dnsRestart()">🔄 Reiniciar</button>
           <button class="btn btn-install" onclick="dnsInstall()">📦 Instal·lar</button>
+          <button class="btn btn-config" onclick="openDnsWizard()">⚙️ Configurar BIND9</button>
         </div>
       </div>
 
@@ -76,11 +76,11 @@
     </div>
 
     <div class="footer">
-      <p>Control de Serveis Linux - Interfície Web v3.4</p>
+      <p>Control de Serveis Linux - Interfície Web v4.0</p>
     </div>
   </div>
 
-  <!-- Modal d'edició -->
+  <!-- Modal d'edició d'arxius -->
   <div id="editorModal" class="modal">
     <div class="modal-content">
       <h3 id="editorTitle">📝 Editar fitxer</h3>
@@ -97,40 +97,45 @@
       </div>
     </div>
   </div>
-  <!-- Modal de configuració automàtica DHCP -->
-  <div id="dhcpWizardModal" class="modal">
-    <div class="modal-content wizard">
-      <h3>🧩 Generar Configuració DHCP Automàticament</h3>
-      <p class="wizard-desc">Introdueix la informació bàsica per generar <code>/etc/dhcp/dhcpd.conf</code></p>
 
-      <div class="wizard-form">
-        <label>Xarxa (CIDR):</label>
-        <input id="dhcpNetwork" type="text" placeholder="Ex: 192.168.1.0/24">
-
-        <label>Rang d’adreces disponibles:</label>
-        <input id="dhcpRangeStart" type="text" placeholder="Ex: 192.168.1.50">
-        <input id="dhcpRangeEnd" type="text" placeholder="Ex: 192.168.1.150">
-
-        <label>Adreces excloses (opcional):</label>
-        <input id="dhcpExcluded" type="text" placeholder="Ex: 192.168.1.10,192.168.1.20">
-
-        <label>IP del router (gateway):</label>
-        <input id="dhcpRouter" type="text" placeholder="Ex: 192.168.1.1">
-
-        <label>Servidor DNS:</label>
-        <input id="dhcpDns" type="text" placeholder="Ex: 8.8.8.8">
-
-        <label>Duració del lloguer (lease time, en segons):</label>
-        <input id="dhcpLeaseTime" type="number" placeholder="Ex: 600">
-
-        <div class="editor-actions">
-          <button class="btn btn-save" onclick="generateDhcpConfig()">💾 Generar i Desa</button>
-          <button class="btn btn-close" onclick="closeDhcpWizard()">❌ Cancel·lar</button>
-        </div>
+  <!-- Modal: Wizard DHCP -->
+  <div id="dhcpModal" class="modal">
+    <div class="modal-content">
+      <h3>⚙️ Assistència de Configuració DHCP</h3>
+      <div class="grid-2">
+        <label> Xarxa (CIDR) <input id="dhcp_network" placeholder="192.168.10.0/24" /></label>
+        <label> IP del router <input id="dhcp_router" placeholder="192.168.10.1" /></label>
+        <label> Interfície <input id="dhcp_iface" placeholder="enp0s3" /></label>
+        <label> DNS (separat per comes) <input id="dhcp_dns" placeholder="1.1.1.1,8.8.8.8" /></label>
+        <label> Adreces a excloure (comes) <input id="dhcp_excluded" placeholder="192.168.10.2,192.168.10.3" /></label>
+        <label> Nº d'IPs disponibles <input id="dhcp_pool" type="number" min="2" value="50" /></label>
+        <label> Temps de lloguer per defecte (s) <input id="dhcp_dflt_lease" type="number" value="600" /></label>
+        <label> Temps de lloguer màx (s) <input id="dhcp_max_lease" type="number" value="7200" /></label>
+      </div>
+      <div class="editor-actions">
+        <button class="btn btn-save" onclick="submitDhcpConfig()">Generar i aplicar</button>
+        <button class="btn btn-close" onclick="closeDhcpWizard()">Tancar</button>
       </div>
     </div>
   </div>
 
-  <script src="../Backend/script.js"></script>
+  <!-- Modal: Wizard DNS/BIND9 -->
+  <div id="dnsModal" class="modal">
+    <div class="modal-content">
+      <h3>⚙️ Assistència de Configuració BIND9</h3>
+      <div class="grid-2">
+        <label> Domini (zona) <input id="dns_domain" placeholder="lan.local" /></label>
+        <label> IP del servidor DNS (A @) <input id="dns_ip" placeholder="192.168.10.2" /></label>
+        <label> NS host (ex. ns1) <input id="dns_ns" placeholder="ns1" /></label>
+        <label> Forwarders (opcional) <input id="dns_forwarders" placeholder="1.1.1.1;8.8.8.8" /></label>
+      </div>
+      <div class="editor-actions">
+        <button class="btn btn-save" onclick="submitDnsConfig()">Generar i aplicar</button>
+        <button class="btn btn-close" onclick="closeDnsWizard()">Tancar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
