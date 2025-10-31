@@ -215,6 +215,36 @@ def index():
         }
     })
 
+@app.route('/config/generate_dhcp', methods=['POST'])
+def generate_dhcp():
+    data = request.get_json()
+
+    subnet = data.get('subnet', '192.168.1.0')
+    netmask = data.get('netmask', '255.255.255.0')
+    ip_range = data.get('range', '192.168.1.10 192.168.1.100')
+    router = data.get('router', '192.168.1.1')
+    dns = data.get('dns', '8.8.8.8, 1.1.1.1')
+
+    config = f"""
+default-lease-time 600;
+max-lease-time 7200;
+authoritative;
+
+subnet {subnet} netmask {netmask} {{
+  range {ip_range};
+  option routers {router};
+  option domain-name-servers {dns};
+}}
+"""
+
+    try:
+        with open("/etc/dhcp/dhcpd.conf", "w") as f:
+            f.write(config)
+        subprocess.run(["systemctl", "restart", "isc-dhcp-server"], check=False)
+        return "✅ Fitxer /etc/dhcp/dhcpd.conf generat i servei DHCP reiniciat correctament."
+    except Exception as e:
+        return f"❌ Error al generar el fitxer DHCP: {e}"
+
 if __name__ == '__main__':
     print("=" * 60)
     print("🚀 Iniciant servidor Flask...")
@@ -224,3 +254,4 @@ if __name__ == '__main__':
     print("=" * 60)
 
     app.run(host="0.0.0.0", port=5000, debug=False)
+

@@ -1,154 +1,180 @@
-const API_URL = 'http://localhost:5000';
+// ==========================
+// 📡 CONFIGURACIÓ GENERAL
+// ==========================
+const API_URL = "http://localhost:5000";
+const resultat = document.getElementById("resultat");
+const backendIndicator = document.getElementById("backendIndicator");
+const backendStatusText = document.getElementById("backendStatusText");
 
-function updateOutput(message, isError = false) {
-  const output = document.getElementById('resultat');
-  const timestamp = new Date().toLocaleTimeString('ca-ES');
-  const prefix = isError ? '❌ ERROR' : '✅';
-  output.textContent = `[${timestamp}] ${prefix}\n${message}\n\n${output.textContent}`;
-}
-
-function fetchService(url, method = "GET") {
-  updateOutput(`Executant: ${method} ${url}...`, false);
-
-  fetch(url, { method: method })
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      updateOutput(data.output, false);
-    })
-    .catch(err => {
-      updateOutput(`Error de connexió: ${err.message}\nAssegura't que el backend està executant-se (sudo python3 script.py)`, true);
-      updateBackendStatus(false);
-    });
-}
-
-function updateBackendStatus(isActive) {
-  const indicator = document.getElementById('backendIndicator');
-  const statusText = document.getElementById('backendStatusText');
-
-  if (isActive) {
-    indicator.classList.add('active');
-    statusText.textContent = 'Backend: ✅ Actiu';
-    statusText.style.color = '#28a745';
-  } else {
-    indicator.classList.remove('active');
-    statusText.textContent = 'Backend: ❌ Inactiu';
-    statusText.style.color = '#dc3545';
+// ==========================
+// 🔧 FUNCIONS GENERALS
+// ==========================
+async function execCommand(endpoint) {
+  resultat.innerText = "⏳ Executant comanda...";
+  try {
+    const res = await fetch(`${API_URL}/${endpoint}`);
+    const data = await res.text();
+    resultat.innerText = data;
+  } catch (err) {
+    resultat.innerText = "❌ Error de connexió amb el backend.";
   }
 }
 
-function checkBackend() {
-  updateOutput('Comprovant connexió amb el backend...', false);
-
-  fetch(`${API_URL}/dhcp/status`)
-    .then(res => {
-      if (res.ok) {
-        updateBackendStatus(true);
-        updateOutput('Backend connectat correctament! ✅', false);
-      } else {
-        throw new Error('Backend no respon');
-      }
-    })
-    .catch(err => {
-      updateBackendStatus(false);
-      updateOutput(`No es pot connectar amb el backend.\nExecuta: sudo python3 script.py`, true);
-    });
+async function checkBackend() {
+  try {
+    const res = await fetch(`${API_URL}/ping`);
+    if (res.ok) {
+      backendIndicator.classList.add("active");
+      backendStatusText.textContent = "Backend: Connectat ✅";
+    } else {
+      throw new Error();
+    }
+  } catch {
+    backendIndicator.classList.remove("active");
+    backendStatusText.textContent = "Backend: Desconnectat ❌";
+  }
 }
 
-// ---------- DHCP ----------
-function dhcpStatus() { fetchService(`${API_URL}/dhcp/status`); }
-function dhcpStart() { fetchService(`${API_URL}/dhcp/start`, 'POST'); }
-function dhcpStop() { fetchService(`${API_URL}/dhcp/stop`, 'POST'); }
-function dhcpRestart() { fetchService(`${API_URL}/dhcp/restart`, 'POST'); }
-function dhcpInstall() { fetchService(`${API_URL}/dhcp/install`, 'POST'); }
+// ==========================
+// 🧩 SERVEI DHCP
+// ==========================
+function dhcpStatus() { execCommand("dhcp/status"); }
+function dhcpStart() { execCommand("dhcp/start"); }
+function dhcpStop() { execCommand("dhcp/stop"); }
+function dhcpRestart() { execCommand("dhcp/restart"); }
+function dhcpInstall() { execCommand("dhcp/install"); }
 
-// ---------- DNS ----------
-function dnsStatus() { fetchService(`${API_URL}/dns/status`); }
-function dnsStart() { fetchService(`${API_URL}/dns/start`, 'POST'); }
-function dnsStop() { fetchService(`${API_URL}/dns/stop`, 'POST'); }
-function dnsRestart() { fetchService(`${API_URL}/dns/restart`, 'POST'); }
-function dnsInstall() { fetchService(`${API_URL}/dns/install`, 'POST'); }
+// ==========================
+// 🌐 SERVEI DNS
+// ==========================
+function dnsStatus() { execCommand("dns/status"); }
+function dnsStart() { execCommand("dns/start"); }
+function dnsStop() { execCommand("dns/stop"); }
+function dnsRestart() { execCommand("dns/restart"); }
+function dnsInstall() { execCommand("dns/install"); }
 
-// ---------- Logs i Configuració ----------
-function openLogs() {
-  updateOutput('📂 Obrint sortides del sistema...', false);
-
-  fetch(`${API_URL}/logs`)
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      updateOutput(data.output, false);
-    })
-    .catch(err => {
-      updateOutput(`Error en obrir sortides: ${err.message}`, true);
-    });
-}
+// ==========================
+// 📝 EDICIÓ DE CONFIGURACIÓ
+// ==========================
+const editorModal = document.getElementById("editorModal");
+const configEditor = document.getElementById("configEditor");
+const configSelector = document.getElementById("configSelector");
 
 function editConfigs() {
-  document.getElementById("editorModal").style.display = "flex";
+  editorModal.style.display = "flex";
   loadConfigFile();
 }
 
 function closeEditor() {
-  document.getElementById("editorModal").style.display = "none";
+  editorModal.style.display = "none";
 }
 
-function loadConfigFile() {
-  const path = document.getElementById("configSelector").value;
-  updateOutput(`📄 Obrint fitxer: ${path}`, false);
+async function loadConfigFile() {
+  const file = configSelector.value;
+  resultat.innerText = `📂 Obrint ${file}...`;
+  try {
+    const res = await fetch(`${API_URL}/config/load?file=${encodeURIComponent(file)}`);
+    configEditor.value = await res.text();
+  } catch {
+    configEditor.value = "❌ Error al carregar el fitxer.";
+  }
+}
 
-  if (path === "/etc/default/isc-dhcp-server") {
-  updateOutput("💡 Consell: en aquest fitxer pots definir la interfície de xarxa per al DHCP.\nExemple:\nINTERFACESv4=\"enp0s3\"", false);
+async function saveConfig() {
+  const file = configSelector.value;
+  const content = configEditor.value;
+  resultat.innerText = `💾 Desant ${file}...`;
+  try {
+    const res = await fetch(`${API_URL}/config/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file, content })
+    });
+    resultat.innerText = await res.text();
+  } catch {
+    resultat.innerText = "❌ Error al desar la configuració.";
+  }
+  closeEditor();
+}
+
+// ==========================
+// ⚙️ ASSISTENT DHCP (WIZARD)
+// ==========================
+function openDhcpWizard() {
+  document.getElementById("dhcpWizardModal").style.display = "flex";
+}
+
+function closeDhcpWizard() {
+  document.getElementById("dhcpWizardModal").style.display = "none";
+}
+
+async function generateDhcpConfig() {
+ const subnetInput = document.getElementById("dhcpNetwork").value.trim();
+
+  // Detectem si hi ha prefix (ex: 192.168.1.0/24)
+  let subnet = subnetInput;
+  let netmask = "255.255.255.0"; // per defecte
+
+  if (subnetInput.includes("/")) {
+    const [ip, prefix] = subnetInput.split("/");
+    subnet = ip;
+    const prefixNum = parseInt(prefix);
+
+    // Taula bàsica de correspondències
+    const prefixToMask = {
+      8: "255.0.0.0",
+      16: "255.255.0.0",
+      24: "255.255.255.0",
+      25: "255.255.255.128",
+      26: "255.255.255.192",
+      27: "255.255.255.224",
+      28: "255.255.255.240",
+      29: "255.255.255.248",
+      30: "255.255.255.252"
+    };
+
+    if (prefixToMask[prefixNum]) {
+      netmask = prefixToMask[prefixNum];
+    }
   }
 
-  fetch(`${API_URL}/config?path=${encodeURIComponent(path)}`)
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      document.getElementById("configEditor").value = data.content || "";
-      document.getElementById("editorTitle").textContent = `📝 Editant: ${path}`;
-      updateOutput(`Fitxer carregat correctament ✅`, false);
-    })
-    .catch(err => {
-      updateOutput(`Error carregant fitxer: ${err.message}`, true);
+  const data = {
+    subnet,
+    netmask,
+    range: `${document.getElementById("dhcpRangeStart").value} ${document.getElementById("dhcpRangeEnd").value}`,
+    router: document.getElementById("dhcpRouter").value,
+    dns: document.getElementById("dhcpDns").value
+  };
+
+
+  resultat.innerText = "⚙️ Generant configuració DHCP...";
+
+  try {
+    const res = await fetch(`${API_URL}/config/generate_dhcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
     });
+    const text = await res.text();
+    resultat.innerText = text;
+  } catch (err) {
+    resultat.innerText = "❌ Error: no s'ha pogut generar el fitxer DHCP.";
+  }
+
+  closeDhcpWizard();
 }
 
-function saveConfig() {
-  const path = document.getElementById("configSelector").value;
-  const content = document.getElementById("configEditor").value;
-  updateOutput(`💾 Desant canvis a: ${path}`, false);
-
-  fetch(`${API_URL}/config/save`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path, content })
-  })
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      updateOutput(data.output, !data.success);
-      if (data.success) alert("Fitxer desat correctament ✅");
-    })
-    .catch(err => {
-      updateOutput(`Error desant fitxer: ${err.message}`, true);
-    });
-}
-
-// ---------- Utilitats ----------
+// ==========================
+// 🧹 NETEJA RESULTATS
+// ==========================
 function clearOutput() {
-  document.getElementById('resultat').textContent = "Esperant comandes...";
+  resultat.innerText = "";
 }
 
-// Comprovar backend a l'iniciar
-window.addEventListener('load', () => {
-  setTimeout(checkBackend, 500);
-});
+// ==========================
+// 🚀 INICIALITZACIÓ
+// ==========================
+window.onload = () => {
+  checkBackend();
+  setInterval(checkBackend, 8000); // comprova l’estat cada 8 segons
+};

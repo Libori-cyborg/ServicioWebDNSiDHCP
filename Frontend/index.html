@@ -41,6 +41,8 @@
           <button class="btn btn-stop" onclick="dhcpStop()">⏹️ Parar</button>
           <button class="btn btn-restart" onclick="dhcpRestart()">🔄 Reiniciar</button>
           <button class="btn btn-install" onclick="dhcpInstall()">📦 Instal·lar</button>
+          <button class="btn btn-auto" onclick="openDhcpWizard()">⚙️ Configurar DHCP Automàticament</button>
+
         </div>
       </div>
 
@@ -92,6 +94,39 @@
       <div class="editor-actions">
         <button class="btn btn-save" onclick="saveConfig()">💾 Desa</button>
         <button class="btn btn-close" onclick="closeEditor()">❌ Tancar</button>
+      </div>
+    </div>
+  </div>
+  <!-- Modal de configuració automàtica DHCP -->
+  <div id="dhcpWizardModal" class="modal">
+    <div class="modal-content wizard">
+      <h3>🧩 Generar Configuració DHCP Automàticament</h3>
+      <p class="wizard-desc">Introdueix la informació bàsica per generar <code>/etc/dhcp/dhcpd.conf</code></p>
+
+      <div class="wizard-form">
+        <label>Xarxa (CIDR):</label>
+        <input id="dhcpNetwork" type="text" placeholder="Ex: 192.168.1.0/24">
+
+        <label>Rang d’adreces disponibles:</label>
+        <input id="dhcpRangeStart" type="text" placeholder="Ex: 192.168.1.50">
+        <input id="dhcpRangeEnd" type="text" placeholder="Ex: 192.168.1.150">
+
+        <label>Adreces excloses (opcional):</label>
+        <input id="dhcpExcluded" type="text" placeholder="Ex: 192.168.1.10,192.168.1.20">
+
+        <label>IP del router (gateway):</label>
+        <input id="dhcpRouter" type="text" placeholder="Ex: 192.168.1.1">
+
+        <label>Servidor DNS:</label>
+        <input id="dhcpDns" type="text" placeholder="Ex: 8.8.8.8">
+
+        <label>Duració del lloguer (lease time, en segons):</label>
+        <input id="dhcpLeaseTime" type="number" placeholder="Ex: 600">
+
+        <div class="editor-actions">
+          <button class="btn btn-save" onclick="generateDhcpConfig()">💾 Generar i Desa</button>
+          <button class="btn btn-close" onclick="closeDhcpWizard()">❌ Cancel·lar</button>
+        </div>
       </div>
     </div>
   </div>
