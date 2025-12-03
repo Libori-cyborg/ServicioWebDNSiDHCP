@@ -233,6 +233,60 @@ body {
   border: 1px solid var(--border);
 }
 
+/* Modal de error */
+.error-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+.error-content {
+  background: #1a0f0f;
+  border: 2px solid var(--red);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 25px 50px rgba(239, 68, 68, 0.2);
+  animation: slideDown 0.3s ease;
+}
+
+.error-content h3 {
+  color: var(--red);
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+
+.error-content p {
+  color: var(--text);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { 
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 #configEditor {
   width: 100%;
   height: 400px;
@@ -286,5 +340,75 @@ body {
   border:1px solid var(--border);
   border-radius:8px;
   outline:none;
+  transition: border-color 0.2s;
+}
+.grid-2 input:focus {
+  border-color: var(--blue);
+}
+.grid-2 input.error {
+  border-color: var(--red);
+  background: #1a0f0f;
 }
 .grid-2 input::placeholder{ color:#5b677c; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+  
+  .container {
+    border-radius: 12px;
+  }
+  
+  .header h1 {
+    font-size: 22px;
+  }
+  
+  .status-bar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .service-controls {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+  
+  .output-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .output-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .output-buttons .btn {
+    width: 100%;
+  }
+  
+  .modal-content {
+    width: 95%;
+    padding: 16px;
+  }
+  
+  #configEditor {
+    height: 300px;
+  }
+  
+  .error-content {
+    width: 95%;
+    padding: 20px;
+  }
+}

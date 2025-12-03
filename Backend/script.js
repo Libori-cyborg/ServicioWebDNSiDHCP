@@ -61,6 +61,60 @@ function checkBackend() {
     });
 }
 
+// ---------- Validacions ----------
+function validateIP(ip) {
+  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (!ipRegex.test(ip)) return false;
+  
+  const parts = ip.split('.');
+  return parts.every(part => {
+    const num = parseInt(part, 10);
+    return num >= 0 && num <= 255;
+  });
+}
+
+function validateCIDR(cidr) {
+  const parts = cidr.split('/');
+  if (parts.length !== 2) return false;
+  
+  const ip = parts[0];
+  const mask = parseInt(parts[1], 10);
+  
+  return validateIP(ip) && mask >= 0 && mask <= 32;
+}
+
+function validateInterface(iface) {
+  // Permet noms d'interfície comuns: eth0, enp0s3, wlan0, etc.
+  const ifaceRegex = /^[a-zA-Z0-9]+$/;
+  return ifaceRegex.test(iface) && iface.length > 0 && iface.length < 16;
+}
+
+function validateDomain(domain) {
+  // Valida dominis bàsics
+  const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$/;
+  return domainRegex.test(domain) && domain.length > 1 && domain.length < 255;
+}
+
+function validateHostname(hostname) {
+  // Valida noms d'host
+  const hostnameRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/;
+  return hostnameRegex.test(hostname) && hostname.length > 0 && hostname.length < 64;
+}
+
+function showError(message) {
+  const modal = document.createElement('div');
+  modal.className = 'error-modal';
+  modal.innerHTML = `
+    <div class="error-content">
+      <h3>⚠️ Error de Validació</h3>
+      <p>${message}</p>
+      <button onclick="this.parentElement.parentElement.remove()" class="btn btn-close">Tancar</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  setTimeout(() => modal.remove(), 5000);
+}
+
 // ---------- DHCP ----------
 function dhcpStatus() { fetchService(`${API_URL}/dhcp/status`); }
 function dhcpStart() { fetchService(`${API_URL}/dhcp/start`, 'POST'); }
@@ -154,38 +208,129 @@ function openDnsWizard(){ document.getElementById('dnsModal').style.display='fle
 function closeDnsWizard(){ document.getElementById('dnsModal').style.display='none'; }
 
 function submitDhcpConfig(){
-  const payload = {
-    network_cidr: document.getElementById('dhcp_network').value.trim(),
-    router_ip: document.getElementById('dhcp_router').value.trim(),
-    iface: document.getElementById('dhcp_iface').value.trim(),
-    dns_list: document.getElementById('dhcp_dns').value.trim(),
-    excluded: document.getElementById('dhcp_excluded').value.trim(),
-    pool_size: parseInt(document.getElementById('dhcp_pool').value,10),
-    default_lease: parseInt(document.getElementById('dhcp_dflt_lease').value,10),
-    max_lease: parseInt(document.getElementById('dhcp_max_lease').value,10)
-  };
+  const network_cidr = document.getElementById('dhcp_network').value.trim();
+  const router_ip = document.getElementById('dhcp_router').value.trim();
+  const iface = document.getElementById('dhcp_iface').value.trim();
+  const dns_list = document.getElementById('dhcp_dns').value.trim();
+  const excluded = document.getElementById('dhcp_excluded').value.trim();
+  const pool_size = parseInt(document.getElementById('dhcp_pool').value, 10);
+  const default_lease = parseInt(document.getElementById('dhcp_dflt_lease').value, 10);
+  const max_lease = parseInt(document.getElementById('dhcp_max_lease').value, 10);
 
-  if(!payload.network_cidr || !payload.router_ip || !payload.iface || !payload.pool_size){
-    alert("Omple com a mínim: Xarxa CIDR, IP del router, Interfície i Nº d'IPs.");
+  // Validacions
+  if (!network_cidr || !router_ip || !iface || !pool_size) {
+    showError("Omple com a mínim: Xarxa CIDR, IP del router, Interfície i Nº d'IPs.");
     return;
   }
 
+  if (!validateCIDR(network_cidr)) {
+    showError("Format de xarxa CIDR invàlid. Exemple: 192.168.10.0/24");
+    return;
+  }
+
+  if (!validateIP(router_ip)) {
+    showError("IP del router invàlida. Exemple: 192.168.10.1");
+    return;
+  }
+
+  if (!validateInterface(iface)) {
+    showError("Nom d'interfície invàlid. Exemples: eth0, enp0s3, wlan0");
+    return;
+  }
+
+  if (pool_size < 2 || pool_size > 65000) {
+    showError("El número d'IPs ha d'estar entre 2 i 65000");
+    return;
+  }
+
+  if (default_lease < 60 || max_lease < default_lease) {
+    showError("Temps de lloguer invàlids. El temps per defecte ha de ser mínim 60s i el màxim ha de ser major.");
+    return;
+  }
+
+  // Validar DNS si s'han especificat
+  if (dns_list) {
+    const dnsIps = dns_list.split(',').map(s => s.trim());
+    for (const ip of dnsIps) {
+      if (!validateIP(ip)) {
+        showError(`IP DNS invàlida: ${ip}`);
+        return;
+      }
+    }
+  }
+
+  // Validar IPs excloses si s'han especificat
+  if (excluded) {
+    const excludedIps = excluded.split(',').map(s => s.trim());
+    for (const ip of excludedIps) {
+      if (!validateIP(ip)) {
+        showError(`IP exclosa invàlida: ${ip}`);
+        return;
+      }
+    }
+  }
+
+  const payload = {
+    network_cidr,
+    router_ip,
+    iface,
+    dns_list,
+    excluded,
+    pool_size,
+    default_lease,
+    max_lease
+  };
+
+  closeDhcpWizard();
   fetchService(`${API_URL}/dhcp/configure`, 'POST', payload);
 }
 
 function submitDnsConfig(){
-  const payload = {
-    domain: document.getElementById('dns_domain').value.trim(),
-    server_ip: document.getElementById('dns_ip').value.trim(),
-    ns_host: document.getElementById('dns_ns').value.trim(),
-    forwarders: document.getElementById('dns_forwarders').value.trim()
-  };
+  const domain = document.getElementById('dns_domain').value.trim();
+  const server_ip = document.getElementById('dns_ip').value.trim();
+  const ns_host = document.getElementById('dns_ns').value.trim();
+  const forwarders = document.getElementById('dns_forwarders').value.trim();
 
-  if(!payload.domain || !payload.server_ip || !payload.ns_host){
-    alert("Omple: Domini, IP del servidor i NS host.");
+  // Validacions
+  if (!domain || !server_ip || !ns_host) {
+    showError("Omple: Domini, IP del servidor i NS host.");
     return;
   }
 
+  if (!validateDomain(domain)) {
+    showError("Format de domini invàlid. Exemple: lan.local o exemple.com");
+    return;
+  }
+
+  if (!validateIP(server_ip)) {
+    showError("IP del servidor invàlida. Exemple: 192.168.10.2");
+    return;
+  }
+
+  if (!validateHostname(ns_host)) {
+    showError("Nom d'host NS invàlid. Exemple: ns1 o dns1");
+    return;
+  }
+
+  // Validar forwarders si s'han especificat
+  if (forwarders) {
+    const fwdIps = forwarders.replace(/;/g, ',').split(',').map(s => s.trim()).filter(s => s);
+    for (const ip of fwdIps) {
+      if (!validateIP(ip)) {
+        showError(`IP forwarder invàlida: ${ip}`);
+        return;
+      }
+    }
+  }
+
+  const payload = {
+    domain,
+    server_ip,
+    ns_host,
+    forwarders
+  };
+
+  closeDnsWizard();
   fetchService(`${API_URL}/dns/configure`, 'POST', payload);
 }
 
