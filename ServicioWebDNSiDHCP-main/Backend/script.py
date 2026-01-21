@@ -5,7 +5,12 @@ import os
 import ipaddress
 from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder="../frontend",
+    static_folder="../frontend",
+    static_url_path=""
+)
 CORS(app)
 
 # ---------- Utilitats ----------
@@ -384,7 +389,13 @@ def save_config():
         return jsonify({"success": False, "output": f"Error desant {path}: {str(e)}"})
 
 # ---------- Informació de l'API ----------
-@app.route('/', methods=['GET'])
+from flask import render_template
+
+@app.route('/')
+def index():
+    return render_template("index.html")
+
+'''@app.route('/', methods=['GET'])
 def index():
     return jsonify({
         "message": "API de Control de Serveis DHCP i DNS",
@@ -413,7 +424,7 @@ def index():
                 "save": "/config/save [POST]"
             }
         }
-    })
+    })'''
 
 if __name__ == '__main__':
     print("=" * 60)
