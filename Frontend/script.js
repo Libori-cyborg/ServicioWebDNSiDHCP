@@ -1,5 +1,8 @@
 const API_URL = `${window.location.protocol}//${window.location.hostname}:5000`;
 
+const API_KEY = "clase123";  // 🔑 misma clave que en Flask
+
+
 function updateOutput(message, isError = false) {
   const output = document.getElementById('resultat');
   const timestamp = new Date().toLocaleTimeString('ca-ES');
@@ -10,9 +13,18 @@ function updateOutput(message, isError = false) {
 function fetchService(url, method = "GET", body = null) {
   updateOutput(`Executant: ${method} ${url}...`, false);
 
-  const opts = { method: method };
+ const opts = {
+  method: method,
+  headers: {
+    "X-API-KEY": API_KEY
+  }
+  };
+
   if (body) {
-    opts.headers = { "Content-Type": "application/json" };
+    opts.headers = {
+  "Content-Type": "application/json",
+  "X-API-KEY": API_KEY
+  };
     opts.body = JSON.stringify(body);
   }
 

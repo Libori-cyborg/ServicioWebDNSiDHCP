@@ -4,6 +4,21 @@ import subprocess
 import os
 import ipaddress
 from datetime import datetime
+from functools import wraps
+
+API_KEY = "clase123"
+def require_key(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        key = request.headers.get("X-API-KEY")
+        if key != API_KEY:
+            return jsonify({
+                "success": False,
+                "output": "❌ No autorizado: clave API incorrecta"
+            }), 401
+        return f(*args, **kwargs)
+    return decorated
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -113,18 +128,22 @@ def dhcp_status():
     return run_service_cmd("isc-dhcp-server", "status")
 
 @app.route('/dhcp/start', methods=['POST'])
+@require_key
 def dhcp_start():
     return run_service_cmd("isc-dhcp-server", "start")
 
 @app.route('/dhcp/stop', methods=['POST'])
+@require_key
 def dhcp_stop():
     return run_service_cmd("isc-dhcp-server", "stop")
 
 @app.route('/dhcp/restart', methods=['POST'])
+@require_key
 def dhcp_restart():
     return run_service_cmd("isc-dhcp-server", "restart")
 
 @app.route('/dhcp/install', methods=['POST'])
+@require_key
 def dhcp_install():
     return install_package("isc-dhcp-server", "DHCP")
 
@@ -145,6 +164,7 @@ def pick_dhcp_pool(network: ipaddress.IPv4Network, router_ip: ipaddress.IPv4Addr
     return usable[1], usable[1+pool_size-1]
 
 @app.route('/dhcp/configure', methods=['POST'])
+@require_key
 def dhcp_configure():
     data = request.get_json(force=True)
     try:
@@ -242,22 +262,27 @@ def dns_status():
     return run_service_cmd("bind9", "status")
 
 @app.route('/dns/start', methods=['POST'])
+@require_key
 def dns_start():
     return run_service_cmd("bind9", "start")
 
 @app.route('/dns/stop', methods=['POST'])
+@require_key
 def dns_stop():
     return run_service_cmd("bind9", "stop")
 
 @app.route('/dns/restart', methods=['POST'])
+@require_key
 def dns_restart():
     return run_service_cmd("bind9", "restart")
 
 @app.route('/dns/install', methods=['POST'])
+@require_key
 def dns_install():
     return install_package("bind9", "DNS")
 
 @app.route('/dns/configure', methods=['POST'])
+@require_key
 def dns_configure():
     data = request.get_json(force=True)
     try:
@@ -378,6 +403,7 @@ def get_config():
         return jsonify({"content": "", "success": False, "output": str(e)})
 
 @app.route('/config/save', methods=['POST'])
+@require_key
 def save_config():
     data = request.get_json()
     path = data.get("path")
