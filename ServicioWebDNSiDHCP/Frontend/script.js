@@ -50,10 +50,17 @@ function fetchService(url, method="GET") {
     method,
     headers: { "X-API-KEY": API_KEY }
   })
-  .then(r => r.json())
+  .then(async r => {
+    const data = await r.json();
+    if (!r.ok) throw data;
+    return data;
+  })
   .then(d => updateOutput(d.output))
-  .catch(e => updateOutput(e.message));
+  .catch(e => {
+    updateOutput(e.output || "❌ Error de autenticació");
+  });
 }
+
 
 // ================= SERVICES =================
 
