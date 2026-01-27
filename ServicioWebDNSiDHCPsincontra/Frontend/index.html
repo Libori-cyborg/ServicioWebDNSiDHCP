@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/style.css">
+  <title>Control DHCP i DNS</title>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🖥️ Control de Serveis Linux</h1>
+      <p>Gestió de serveis DHCP (isc-dhcp-server) i DNS (bind9)</p>
+    </div>
+
+    <div class="status-bar">
+      <input
+        type="password"
+        id="apiKeyInput"
+        placeholder="🔑 Clau d'accés"
+        style="padding:6px 10px;border-radius:6px;border:1px solid #2a364a;background:#0f172a;color:#e5e7eb;"
+      >
+
+      <button class="btn btn-check" onclick="saveKey()">Guardar clau</button>
+
+      <div class="backend-status">
+        <div class="status-indicator" id="backendIndicator"></div>
+        <span id="backendStatusText">Backend: Desconegut</span>
+      </div>
+      <button class="btn btn-check" onclick="checkBackend()">Comprovar Backend</button>
+    </div>
+
+    <div class="content">
+      <div class="instructions">
+        <h4>⚠️ Important: Executar el Backend</h4>
+        <p>Per utilitzar aquesta interfície, primer has d'executar el backend Flask manualment:</p>
+        <p><code>sudo python3 script.py</code></p>
+        <p>El servidor ha d'estar executant-se al port 5000 abans d'utilitzar els controls.</p>
+      </div>
+
+      <!-- DHCP Section -->
+      <div class="service-section">
+        <div class="service-header">
+          <span class="service-icon">🌐</span>
+          <h3>Servei DHCP (isc-dhcp-server)</h3>
+        </div>
+        <div class="service-controls">
+          <button class="btn btn-status" onclick="dhcpStatus()">📊 Estat</button>
+          <button class="btn btn-start" onclick="dhcpStart()">▶️ Iniciar</button>
+          <button class="btn btn-stop" onclick="dhcpStop()">⏹️ Parar</button>
+          <button class="btn btn-restart" onclick="dhcpRestart()">🔄 Reiniciar</button>
+          <button class="btn btn-install" onclick="dhcpInstall()">📦 Instal·lar</button>
+          <button class="btn btn-config" onclick="openDhcpWizard()">⚙️ Configurar DHCP</button>
+        </div>
+      </div>
+
+      <!-- DNS Section -->
+      <div class="service-section">
+        <div class="service-header">
+          <span class="service-icon">🔍</span>
+          <h3>Servei DNS (bind9)</h3>
+        </div>
+        <div class="service-controls">
+          <button class="btn btn-status" onclick="dnsStatus()">📊 Estat</button>
+          <button class="btn btn-start" onclick="dnsStart()">▶️ Iniciar</button>
+          <button class="btn btn-stop" onclick="dnsStop()">⏹️ Parar</button>
+          <button class="btn btn-restart" onclick="dnsRestart()">🔄 Reiniciar</button>
+          <button class="btn btn-install" onclick="dnsInstall()">📦 Instal·lar</button>
+          <button class="btn btn-config" onclick="openDnsWizard()">⚙️ Configurar BIND9</button>
+        </div>
+      </div>
+
+      <!-- Output Section -->
+      <div class="output-section">
+        <div class="output-header">
+          <h3>💻 Sortida del Terminal</h3>
+          <div class="output-buttons">
+            <button class="btn btn-open" onclick="openLogs()">📂 Obrir sortides</button>
+            <button class="btn btn-edit" onclick="editConfigs()">📝 Editar configuracions</button>
+            <button class="btn btn-clear" onclick="clearOutput()">🗑️ Netejar</button>
+          </div>
+        </div>
+        <div id="resultat">Esperant comandes...</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Control de Serveis Linux - Interfície Web v4.0</p>
+    </div>
+  </div>
+
+  <!-- Modal d'edició d'arxius -->
+  <div id="editorModal" class="modal">
+    <div class="modal-content">
+      <h3 id="editorTitle">📝 Editar fitxer</h3>
+     <select id="configSelector" class="config-selector" onchange="loadConfigFile()">
+  <option value="dhcp">DHCP - /etc/dhcp/dhcpd.conf</option>
+  <option value="bind_local">DNS - /etc/bind/named.conf.local</option>
+  <option value="bind_options">DNS - /etc/bind/named.conf.options</option>
+</select>
+      <textarea id="configEditor" spellcheck="false"></textarea>
+      <div class="editor-actions">
+        <button class="btn btn-save" onclick="saveConfig()">💾 Desa</button>
+        <button class="btn btn-close" onclick="closeEditor()">❌ Tancar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Wizard DHCP -->
+  <div id="dhcpModal" class="modal">
+    <div class="modal-content">
+      <h3>⚙️ Assistència de Configuració DHCP</h3>
+      <div class="grid-2">
+        <label> Xarxa (CIDR) <input id="dhcp_network" placeholder="192.168.10.0/24" /></label>
+        <label> IP del router <input id="dhcp_router" placeholder="192.168.10.1" /></label>
+        <label> Interfície <input id="dhcp_iface" placeholder="enp0s3" /></label>
+        <label> DNS (separat per comes) <input id="dhcp_dns" placeholder="1.1.1.1,8.8.8.8" /></label>
+        <label> Adreces a excloure (comes) <input id="dhcp_excluded" placeholder="192.168.10.2,192.168.10.3" /></label>
+        <label> Nº d'IPs disponibles <input id="dhcp_pool" type="number" min="2" value="50" /></label>
+        <label> Temps de lloguer per defecte (s) <input id="dhcp_dflt_lease" type="number" value="600" /></label>
+        <label> Temps de lloguer màx (s) <input id="dhcp_max_lease" type="number" value="7200" /></label>
+      </div>
+      <div class="editor-actions">
+        <button class="btn btn-save" onclick="submitDhcpConfig()">Generar i aplicar</button>
+        <button class="btn btn-close" onclick="closeDhcpWizard()">Tancar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Wizard DNS/BIND9 -->
+  <div id="dnsModal" class="modal">
+    <div class="modal-content">
+      <h3>⚙️ Assistència de Configuració BIND9</h3>
+      <div class="grid-2">
+        <label> Domini (zona) <input id="dns_domain" placeholder="lan.local" /></label>
+        <label> IP del servidor DNS (A @) <input id="dns_ip" placeholder="192.168.10.2" /></label>
+        <label> NS host (ex. ns1) <input id="dns_ns" placeholder="ns1" /></label>
+        <label> Forwarders (opcional) <input id="dns_forwarders" placeholder="1.1.1.1;8.8.8.8" /></label>
+      </div>
+      <div class="editor-actions">
+        <button class="btn btn-save" onclick="submitDnsConfig()">Generar i aplicar</button>
+        <button class="btn btn-close" onclick="closeDnsWizard()">Tancar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/script.js"></script>
+</body>
+</html>
